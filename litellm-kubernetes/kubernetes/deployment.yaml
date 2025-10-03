@@ -1,0 +1,54 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: litellm-chat-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: litellm-chat-api
+  template:
+    metadata:
+      labels:
+        app: litellm-chat-api
+    spec:
+      containers:
+      - name: litellm-chat-api
+        image: litellm-chat:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5000
+        envFrom:
+        - configMapRef:
+            name: litellm-config
+        - secretRef:
+            name: litellm-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: litellm-chat-service
+spec:
+  selector:
+    app: litellm-chat-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: litellm-config
+data:
+  MODEL_NAME: "ollama/qwen3:8b"
+  API_BASE: "http://ollama.default.svc.cluster.local:11434"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: litellm-secret
+stringData:
+  API_KEY: ""
