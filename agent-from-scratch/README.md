@@ -73,3 +73,19 @@ The exact implemention of tool use is different across providers, but at the cor
 - **Tool schema**: A structured description of the tool. The tool description is important because it tells the LLM what the tool does, when to use it, and what parameters it takes.
 
 This tutorial follows the Anthropic documentation on tool use. If you’re using a different LLM API than this tutorial, I recommend to check out your LLM providers documentation on tool use. Note, that in this tutorial, we are just implementing a single tool. In production code, you’d typically use an abstract base class to ensure a consistent interface across tools.
+
+### Usage
+
+To see the agent use the calculator tool, you can run the `tool_use.py` script and ask it a math question.
+
+```bash
+python tool_use.py
+```
+
+**Example Conversation:**
+
+```
+Agent is ready. Ask a question that might require calculation. Type 'exit' or 'quit' to end.
+You: what is 12 * 4?
+Agent: 12 * 4 is 48.
+```
