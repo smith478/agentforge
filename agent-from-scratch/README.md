@@ -89,3 +89,26 @@ Agent is ready. Ask a question that might require calculation. Type 'exit' or 'q
 You: what is 12 * 4?
 Agent: 12 * 4 is 48.
 ```
+
+**Component 4: Agent Loop**
+
+You might have already heard people say that “Agents are models using tools in a loop”. Without the loop, the agent can only handle single-turn without multi-turn interactions.
+
+Barry Zhan, Anthropic, provides insightful pseudo code showing that agents are just LLMs making decisions in a loop, observing results, and deciding what to do next.
+
+```python
+env = Environment()
+tools = Tools(env)
+system_prompt = "Goals, constraints, and how to act"
+
+while True:
+  action = llm.run(system_prompt + env.state)
+  env.state = tools.run(action)
+```
+
+For this simple agent implementation, that means, we have the following flow:
+
+1. User sends message to agent
+2. Agent decides it needs a tool and responds with a stop_reason of tool_use and a tool_useblock with the tool name and parameters. It’s saying “I’m pausing for you to execute this tool with these parameters”.
+3. The user executes the tool and sends the tool result back to the agent in a follow-up message
+4. The agent continues and gives the final response.
