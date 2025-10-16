@@ -9,7 +9,7 @@ class CalculatorTool():
     def get_schema(self):
         return {
             "name": "calculator",
-            "description": "Performs basic mathematical calculations, use also for simple additions",
+            "description": "Use this tool to evaluate mathematical expressions. It can handle addition, subtraction, multiplication, and division. Always use this tool for any math question to ensure accuracy.",
             "input_schema": {
                 "type": "object",
                 "properties": {
@@ -33,6 +33,7 @@ class CalculatorTool():
             float: The result of the evaluation
         """
         try:
+            print(f"DEBUG: Using calculator tool to evaluate: {expression}")
             result = eval(expression)
             return {"result": result}
         except:
@@ -44,7 +45,7 @@ class Agent:
     def __init__(self, model='granite4:tiny-h', tools=None):
         self.client = Client()
         self.model = model
-        self.messages = [{'role': 'system', 'content': "You are a helpful assistant that breaks down problems into steps and solves them systematically."}]
+        self.messages = [{'role': 'system', 'content': "You are a helpful assistant. You MUST use the calculator tool for any mathematical calculations to ensure accuracy. For all other questions, answer directly."}]
         self.tools = tools or []
         self.tool_map = {tool.get_schema()["name"]: tool for tool in self.tools}
 
@@ -65,6 +66,7 @@ class Agent:
         while response['message'].get("tool_calls"):
             tool_calls = response['message']["tool_calls"]
             for tool_call in tool_calls:
+                print(f"DEBUG: Received tool call object: {tool_call}")
                 tool_name = tool_call['function']['name']
                 tool_args = tool_call['function']['arguments']
                 

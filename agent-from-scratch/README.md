@@ -79,7 +79,7 @@ This tutorial follows the Anthropic documentation on tool use. If you’re using
 To see the agent use the calculator tool, you can run the `tool_use.py` script and ask it a math question.
 
 ```bash
-python tool_use.py
+python tool_use.py --model "gpt-oss:20b"
 ```
 
 **Example Conversation:**
