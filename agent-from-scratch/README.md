@@ -118,7 +118,7 @@ For this simple agent implementation, that means, we have the following flow:
 To see the agent use the calculator tool in a loop, you can run the `agent_loop.py` script and ask it a math question that requires multiple steps.
 
 ```bash
-python agent_loop.py "what is (12 * 4) + 10?"
+python agent_loop.py --model qwen3:8b "what is 102.483 * 129.981?"
 ```
 
 **Example output:**

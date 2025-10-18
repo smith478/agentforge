@@ -36,8 +36,8 @@ class CalculatorTool():
             print(f"DEBUG: Using calculator tool to evaluate: {expression}")
             result = eval(expression)
             return {"result": result}
-        except:
-            return {"error": "Invalid mathematical expression"}
+        except Exception as e:
+            return {"error": f"Invalid mathematical expression: {str(e)}"}
 
 class Agent:
     """A simple AI agent that can use tools to answer questions in a multi-turn conversation"""
@@ -53,6 +53,7 @@ class Agent:
         return [tool.get_schema() for tool in self.tools]
 
     def chat(self, message):
+        """Process a user message and return a response"""
         self.messages.append({"role": "user", "content": message})
 
         response = self.client.chat(
@@ -63,12 +64,52 @@ class Agent:
 
         self.messages.append(response['message'])
 
+        # Process tool calls in a loop until we get a final response
         while response['message'].get("tool_calls"):
             tool_calls = response['message']["tool_calls"]
+            
             for tool_call in tool_calls:
                 print(f"DEBUG: Received tool call object: {tool_call}")
                 tool_name = tool_call['function']['name']
                 tool_args = tool_call['function']['arguments']
+                
+                # Handle empty tool names or mismatched arguments
+                if not tool_name or tool_name not in self.tool_map:
+                    print(f"DEBUG: Tool name '{tool_name}' not found, attempting to infer...")
+                    
+                    # If we only have one tool and arguments are provided, use it
+                    if len(self.tool_map) == 1:
+                        tool_name = list(self.tool_map.keys())[0]
+                        tool = self.tool_map[tool_name]
+                        schema = tool.get_schema()
+                        
+                        # Try to map the arguments to the expected format
+                        expected_props = schema['input_schema']['properties']
+                        
+                        # Check if arguments match expected properties
+                        if 'expression' in expected_props and 'expression' in tool_args:
+                            print(f"DEBUG: Using tool '{tool_name}' with expression argument")
+                        elif 'expression' in expected_props and ('num1' in tool_args or 'num2' in tool_args):
+                            # Convert num1 and num2 to expression format
+                            if 'num1' in tool_args and 'num2' in tool_args:
+                                tool_args = {'expression': f"{tool_args['num1']} * {tool_args['num2']}"}
+                                print(f"DEBUG: Converted num1/num2 to expression: {tool_args['expression']}")
+                        else:
+                            print(f"DEBUG: Could not map arguments to tool schema")
+                            continue
+                    else:
+                        # Try to match based on argument keys
+                        for name, tool in self.tool_map.items():
+                            schema = tool.get_schema()
+                            required_props = schema['input_schema'].get('properties', {}).keys()
+                            if any(key in tool_args for key in required_props):
+                                tool_name = name
+                                print(f"DEBUG: Inferred tool name as '{tool_name}' from arguments")
+                                break
+                        
+                        if tool_name not in self.tool_map:
+                            print(f"Unknown tool: {tool_name}")
+                            continue
                 
                 if tool_name in self.tool_map:
                     tool = self.tool_map[tool_name]
@@ -81,6 +122,7 @@ class Agent:
                 else:
                     print(f"Unknown tool: {tool_name}")
 
+            # Get next response from the model
             response = self.client.chat(
                 model=self.model,
                 messages=self.messages,
@@ -89,59 +131,16 @@ class Agent:
             self.messages.append(response['message'])
 
         return response['message']['content']
-    
-def run_agent(user_input, max_turns=10):
-  calculator_tool = CalculatorTool()
-  agent = Agent(tools=[calculator_tool])
-
-  i = 0
-
-  while i < max_turns: # It's safer to use max_turns rather than while True
-    i += 1
-    print(f"\nIteration {i}:")
-
-    print(f"User input: {user_input}")
-    response = agent.chat(user_input)
-    print(f"Agent output: {response.content[0].text}")
-
-    # Handle tool use if present
-    if response.stop_reason == "tool_use":
-
-        # Process all tool uses in the response
-        tool_results = []
-        for content_block in response.content:
-            if content_block.type == "tool_use":
-                tool_name = content_block.name
-                tool_input = content_block.input
-
-                print(f"Using tool {tool_name} with input {tool_input}")
-
-                # Execute the tool
-                tool = agent.tool_map[tool_name]
-                tool_result = tool.execute(**tool_input)
-
-                tool_results.append({
-                    "type": "tool_result",
-                    "tool_use_id": content_block.id,
-                    "content": json.dumps(tool_result)
-                })
-                print(f"Tool result: {tool_result}")
-
-        # Add tool results to conversation
-        user_input = tool_results
-    else:
-      return response.content[0].text
-
-  return
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="A simple AI agent using Ollama with tool-use capabilities.")
-    parser.add_argument("--model", type=str, default="gpt-oss:20b", help="The Ollama model to use.")
+    parser.add_argument("--model", type=str, default="qwen3:8b", help="The Ollama model to use.")
     parser.add_argument("question", type=str, help="The question to ask the agent.")
     args = parser.parse_args()
 
     calculator_tool = CalculatorTool()
     agent = Agent(model=args.model, tools=[calculator_tool])
 
+    print(f"\nQuestion: {args.question}")
     assistant_message = agent.chat(args.question)
-    print(f"Agent: {assistant_message}")
+    print(f"\nAgent: {assistant_message}")
