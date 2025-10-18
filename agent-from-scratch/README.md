@@ -112,3 +112,20 @@ For this simple agent implementation, that means, we have the following flow:
 2. Agent decides it needs a tool and responds with a stop_reason of tool_use and a tool_useblock with the tool name and parameters. It’s saying “I’m pausing for you to execute this tool with these parameters”.
 3. The user executes the tool and sends the tool result back to the agent in a follow-up message
 4. The agent continues and gives the final response.
+
+### Usage
+
+To see the agent use the calculator tool in a loop, you can run the `agent_loop.py` script and ask it a math question that requires multiple steps.
+
+```bash
+python agent_loop.py "what is (12 * 4) + 10?"
+```
+
+**Example output:**
+```
+DEBUG: Received tool call object: {'function': {'name': 'calculator', 'arguments': {'expression': '12 * 4'}}}
+DEBUG: Using calculator tool to evaluate: 12 * 4
+DEBUG: Received tool call object: {'function': {'name': 'calculator', 'arguments': {'expression': '48 + 10'}}}
+DEBUG: Using calculator tool to evaluate: 48 + 10
+Agent: 58
+```
