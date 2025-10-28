@@ -1,0 +1,2 @@
+ServerApp
+  .jpserver_extensions = <LazyConfigValue value={'jupyter_lsp': True, 'jupyter_server_terminals': True, 'jupyterlab': True, 'notebook': True, 'notebook_shim': True}>
