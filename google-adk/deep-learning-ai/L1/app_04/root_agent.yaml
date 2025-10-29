@@ -1,0 +1,7 @@
+
+name: ai_news_agent_yaml
+model: gemini-live-2.5-flash-preview # Using a model that supports live voice
+description: An agent that answers questions about recent news in Artificial Intelligence.
+instruction: You are an AI News Assistant. Use Google Search to find and summarize recent AI news.
+tools:
+  - name: google_search
